@@ -21,22 +21,26 @@ var model = {
         {
             name: 'Eventide Oyster Company',
             lat: 43.659705,
-            lng: -70.251036
+            lng: -70.251036,
+            placeId: 'ChIJeYjFM0CcskwRsZijjFhjOYE'
         },
         {
             name: 'Bayou Kitchen',
             lat: 43.670450,
-            lng: -70.284195
+            lng: -70.284195,
+            placeId: 'ChIJJSD2zI-bskwRywtim1tbz6s'
         },
         {
             name: 'Veranda Thai Cuisine',
             lat: 43.680542,
-            lng: -70.257118
+            lng: -70.257118,
+            placeId: 'ChIJ35OZyYacskwR3q1HVe00i9I'
         },
         {
             name: 'Little Tap House',
             lat: 43.653080,
-            lng: -70.262272
+            lng: -70.262272,
+            placeId: 'ChIJBXIVtxacskwRHZ9Py-ZKnxk'
         },
         {
             name: 'Eastern Promenade',
@@ -59,13 +63,15 @@ var model = {
 function ViewModel() {
     var self = this;
 
-    self.searchQuery = ko.observable("");
-    self.visiblePlaces = ko.observableArray([]);
-    self.allPlaces = [];
+    self.searchQuery = ko.observable('');
+
+    self.visiblePlaces = ko.observableArray();
     self.myMap = undefined;
+    self.infoWindow = undefined;
+    self.placesService = undefined;
 
     self.initialize = function() {
-        var mapCanvas = document.getElementById('map');
+        var mapCanvas = document.getElementById('map-canvas');
         var mapOptions = {
             center: new google.maps.LatLng(43.6553, -70.2768),
             zoom: 14,
@@ -74,43 +80,89 @@ function ViewModel() {
         self.myMap = new google.maps.Map(mapCanvas, mapOptions);
 
         self.allPlaces = model.places;
-        //self.loadVisiblePlaces();
-        //self.addMarkers();
-        //var place = self.allPlaces[3];
-        //var marker1 = new google.maps.Marker({
-        //    position: new google.maps.LatLng(place.lat, place.lng)
-        //});
-        //marker1.setMap(self.myMap);
-        //marker1.setVisible(true);
+
+        self.allPlaces.forEach(function(place){
+            self.visiblePlaces.push(place);
+        });
+        self.infoWindow = new google.maps.InfoWindow();
     };
 
-    self.loadVisiblePlaces = function() {
-        if (self.searchQuery() == "") {
-            for (var i = 0; i < self.allPlaces.length; i++) {
-                self.visiblePlaces.push(model.places[i]);
-                //console.log("Added " + self.visiblePlaces()[i].name);
+   self.toggleColor = function(marker) {
+        self.visiblePlaces().forEach(function(place){
+            place.marker.setIcon('http://maps.google.com/mapfiles/ms/icons/red-dot.png');
+        });
+        marker.setIcon('http://maps.google.com/mapfiles/ms/icons/blue-dot.png');
+    };
+
+    self.filterMarkers = function() {
+        var searchInput = self.searchQuery().toLowerCase();
+
+        self.visiblePlaces.removeAll();
+        self.infoWindow.close();
+
+        self.allPlaces.forEach(function(place) {
+            place.marker.setIcon('http://maps.google.com/mapfiles/ms/icons/red-dot.png');
+            place.marker.setVisible(false);
+
+            if (place.name.toLowerCase().indexOf(searchInput) >= 0) {
+                self.visiblePlaces.push(place);
             }
-        }
-        console.log("Visible Places Length = " + self.visiblePlaces().length);
+        });
+
+        self.visiblePlaces().forEach(function(place) {
+            place.marker.setVisible(true);
+        });
     };
 
     self.addMarkers = function () {
         for (var i = 0; i < self.visiblePlaces().length; i++) {
-            //console.log(self.visiblePlaces()[i].name + ", " + self.visiblePlaces()[i].latlng.lat);
             var marker = new google.maps.Marker({
                 position: new google.maps.LatLng(self.visiblePlaces()[i].lat, self.visiblePlaces()[i].lng),
                 map: self.myMap,
                 title: self.visiblePlaces()[i].name
             });
+            google.maps.event.addListener(marker, 'click', (function(markerCopy) {
+                return function() {
+                    self.toggleColor(markerCopy);
+                    markerCopy.setIcon('http://maps.google.com/mapfiles/ms/icons/blue-dot.png');
+                    self.infoWindow.setContent("<p>" + markerCopy.title + "</p>");
+                    self.infoWindow.open(self.myMap, markerCopy);
+
+                };
+            })(marker));
+            self.visiblePlaces()[i].marker = marker;
         }
     };
 
+    self.placeClicked = function(place) {
+        self.toggleColor(place.marker);
+        self.infoWindow.setContent("<p>" + place.marker.title + "</p>");
+        self.infoWindow.open(self.myMap, place.marker);
+        return true;
+    };
+
 }
+
+$(document).ready(function() {
+    var items;
+    // Sidebar toggling on/off view on small screen
+    // Sidebar slider code from http://www.codeply.com/go/bp/mL7j0aOINa
+    $('[data-toggle=offcanvas]').click(function() {
+        $('.row-offcanvas').toggleClass('active');
+    });
+    // Change active state for sidebar links when clicked
+    $('li').click(function() {
+        items = document.getElementsByTagName('li');
+        for (var i = 0; i < items.length; i++) {
+            items[i].className = '';
+        }
+        $(this).addClass('active');
+    });
+});
 
 function initialize() {
     var vm = new ViewModel();
     ko.applyBindings(vm);
     vm.initialize();
-    vm.loadVisiblePlaces();
     vm.addMarkers();
 }
