@@ -6,7 +6,8 @@ var model = {
         {
             name: 'Maine Narrow Gauge Railroad',
             lat: 43.662333,
-            lng: -70.243351
+            lng: -70.243351,
+            flickrText: 'Maine+narrow+gauge+railroad+portland+maine'
         },
         {
             name: 'Fort Allen Park',
@@ -55,7 +56,8 @@ var model = {
         {
             name: 'Western Promenade',
             lat: 43.647671,
-            lng: -70.27584
+            lng: -70.27584,
+            flickrText: 'western+promenade+portland+maine'
         }
     ]
 };
@@ -136,11 +138,43 @@ function ViewModel() {
 
     self.placeClicked = function(place) {
         self.toggleColor(place.marker);
-        self.infoWindow.setContent("<p>" + place.marker.title + "</p>");
-        self.infoWindow.open(self.myMap, place.marker);
+        self.fetchPhotosForPlace(place);
+        //self.infoWindow.setContent("<p>" + place.marker.title + "</p>");
+        //self.infoWindow.open(self.myMap, place.marker);
         return true;
     };
 
+    self.fetchPhotosForPlace = function(place) {
+        var flickrApi = "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=7621f55caf1ebb0d151f08771fbaee29&extras=url_m&format=json&jsoncallback=?" +
+            "&text=" + self.placeNameToSearchText(place);
+        //$.ajax({
+        //    url: flickrApi,
+        //    cache: true,
+        //    dataType: 'jsonp',
+        //    success: function(data) {
+        //        console.log(data.photos.photo[0].url_m);
+        //    }
+        //});
+        $.getJSON(flickrApi, {})
+            .done(function (data) {
+                console.log("Data returned from flickr");
+                //$.each(data.photos, function (i, photo) {
+                //    content = content + $("<img>").attr("src", photo.url_m);
+                //    if (i === 3) {
+                //        return false;
+                //    }
+                //});
+                var content = '<p>' + place.name + '</p><img src="' + data.photos.photo[0].url_m + '" />';
+                self.infoWindow.setContent(content);
+                self.infoWindow.open(self.myMap, place.marker);
+            });
+    };
+
+    self.placeNameToSearchText = function(place) {
+        var placeString = place.name + " portland maine";
+        var words = placeString.split(" ");
+        return words.join("+");
+    };
 }
 
 $(document).ready(function() {
