@@ -7,6 +7,21 @@ body,
     height: 100%;
 }
 
+/* Show the header in large font */
+header {
+    font-size: large;
+}
+
+/* Show status text in green if the place is open */
+.status-open {
+    color: green;
+}
+
+/* Show status text in red if the place is closed */
+.status-closed {
+    color: red;
+}
+
 #map-canvas {
     width:100%;
     height:calc(100% - 35px);
@@ -45,6 +60,7 @@ body,
 
 /*
  * off Canvas sidebar
+ * Sidebar slider code from http://www.codeply.com/go/bp/mL7j0aOINa
  * --------------------------------------------------
  */
 @media screen and (max-width: 768px) {

@@ -1,0 +1,28 @@
+{
+  "name": "NeighborhoodMap",
+  "homepage": "https://github.com/tbelunis/NeighborhoodMap",
+  "authors": [
+    "Tom Belunis tbelunis@yahoo.com"
+  ],
+  "description": "Project P5 for the Udacity Front-End Nanodegree",
+  "main": "index.html",
+  "moduleType": [
+    "node"
+  ],
+  "keywords": [
+    "map"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "~3.3.5",
+    "knockout": "~3.3.0"
+  }
+}

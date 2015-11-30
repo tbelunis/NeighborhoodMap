@@ -14,11 +14,11 @@
   </head>
   <body>
   <div class="container-fluid">
-    <header>Visit Portland Maine</header>
+    <header>Eat and Drink in Portland Maine!</header>
 
     <div class="row-offcanvas row-offcanvas-left">
       <div id="sidebar" class="sidebar-offcanvas">
-        <p>Search: <input data-bind="textInput: searchQuery, event: {keyup: filterMarkers}" /> </p>
+        <p>Search: <input data-bind="textInput: searchQuery, event: {keyup: filterPlaces}" /> </p>
         <div class="col-md-12">
           <ul class="nav nav-pills nav-stacked" data-bind="foreach: visiblePlaces()">
             <li class="place-item">
@@ -37,8 +37,24 @@
       </div>
     </div>
   </div>
+
+  <!-- Knockout template for the InfoWindow -->
   <script type="text/html" id="info-window-template">
-    <h3 data-bind="text: name"></h3>
+    <h4 data-bind="text: name"></h4>
+
+    <!-- Show the rating div if shouldShowRating is true -->
+    <div id="rating" data-bind="visible: shouldShowRating">
+      FourSqaure Rating: <span data-bind="text: rating"></span>
+    </div>
+
+    <!-- Show the open status div if shouldShowOpenStatus is true.
+      The function openStatus() will return the css class to apply
+      to the div. Green text if the place is open, otherwise red text.
+    -->
+    <div id="openStatus" data-bind="css: openStatus(), visible: shouldShowOpenStatus">
+      <span data-bind="text: status"></span>
+    </div>
+    <a data-bind="attr: {href: url}"><span data-bind="text: url"></span></a>
   </script>
   </body>
 </html>
