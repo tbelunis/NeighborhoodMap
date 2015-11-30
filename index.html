@@ -13,29 +13,32 @@
     <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBvXAmKGsAVRo5kFdn3uMau5TMzm4e4aDc&library=places&callback=initialize"></script>
   </head>
   <body>
-<div class="container-fluid">
-  <header>Visit Portland Maine</header>
+  <div class="container-fluid">
+    <header>Visit Portland Maine</header>
 
     <div class="row-offcanvas row-offcanvas-left">
-  <div id="sidebar" class="sidebar-offcanvas">
-    <p>Search: <input data-bind="textInput: searchQuery, event: {keyup: filterMarkers}" /> </p>
-      <div class="col-md-12">
-        <ul class="nav nav-pills nav-stacked" data-bind="foreach: visiblePlaces()">
-        <li class="place-item">
-          <a href="#" data-bind="text: name, click: $parent.placeClicked"></a>
-        </li>
-        </ul>
+      <div id="sidebar" class="sidebar-offcanvas">
+        <p>Search: <input data-bind="textInput: searchQuery, event: {keyup: filterMarkers}" /> </p>
+        <div class="col-md-12">
+          <ul class="nav nav-pills nav-stacked" data-bind="foreach: visiblePlaces()">
+            <li class="place-item">
+              <a href="#" data-bind="text: name, click: $parent.placeClicked"></a>
+            </li>
+          </ul>
+        </div>
       </div>
-  </div>
       <div id="main" class="map row">
         <div class="col-md-12 map">
           <p class="visible-xs">
-                        <button type="button" class="btn btn-primary btn-xs" data-toggle="offcanvas"><i class="glyphicon glyphicon-chevron-left"></i></button>
-                    </p>
+            <button type="button" class="btn btn-primary btn-xs" data-toggle="offcanvas"><i class="glyphicon glyphicon-chevron-left"></i></button>
+          </p>
           <div id="map-canvas" class="google-map-canvas"></div>
         </div>
       </div>
     </div>
-</div>
+  </div>
+  <script type="text/html" id="info-window-template">
+    <h3 data-bind="text: name"></h3>
+  </script>
   </body>
 </html>
