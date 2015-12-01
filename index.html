@@ -6,11 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <link href="js/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="styles/styles.css" rel="stylesheet">
-    <script src="js/lib/knockout/dist/knockout.js"></script>
-    <script src="js/lib/jquery/dist/jquery.min.js"></script>
-    <script src="js/lib/bootstrap/dist/js/bootstrap.min.js"></script>
-    <script src="js/app.js"></script>
-    <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBvXAmKGsAVRo5kFdn3uMau5TMzm4e4aDc&library=places&callback=initialize"></script>
   </head>
   <body>
   <div class="container-fluid">
@@ -38,23 +33,11 @@
     </div>
   </div>
 
-  <!-- Knockout template for the InfoWindow -->
-  <script type="text/html" id="info-window-template">
-    <h4 data-bind="text: name"></h4>
+  <script src="js/lib/knockout/dist/knockout.js"></script>
+  <script src="js/lib/jquery/dist/jquery.min.js"></script>
+  <script src="js/lib/bootstrap/dist/js/bootstrap.min.js"></script>
+  <script src="js/app.js"></script>
+  <script async src="https://maps.googleapis.com/maps/api/js?callback=initialize"></script>
 
-    <!-- Show the rating div if shouldShowRating is true -->
-    <div id="rating" data-bind="visible: shouldShowRating">
-      FourSqaure Rating: <span data-bind="text: rating"></span>
-    </div>
-
-    <!-- Show the open status div if shouldShowOpenStatus is true.
-      The function openStatus() will return the css class to apply
-      to the div. Green text if the place is open, otherwise red text.
-    -->
-    <div id="openStatus" data-bind="css: openStatus(), visible: shouldShowOpenStatus">
-      <span data-bind="text: status"></span>
-    </div>
-    <a data-bind="attr: {href: url}"><span data-bind="text: url"></span></a>
-  </script>
   </body>
 </html>

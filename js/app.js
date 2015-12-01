@@ -1,6 +1,115 @@
+'use strict';
 /**
  * Created by tom on 11/5/15.
  **/
+
+// Global variables for map and infowindow
+var map;
+var infoWindow;
+
+
+var clientId = 'X3UYVL1QCSRGJXWW00M3UYNGQ1FX3W00PMRQMAOV22LDJHGW';
+var clientSecret = 'TNI1UYYG0JRIGQE31AIQ2FHPOHE2ZHN2DA4TGW2B4WOB30W0';
+var foursquareAPIBaseUrl = 'https://api.foursquare.com/v2/venues/';
+var foursquareVersion = '20151129';
+
+// ViewModel
+var vm;
+
+
+function createInfoWindowContent(place) {
+    console.log(place);
+    var content = '<div id=info>' +
+        '<h4>' + place.name + '</h4>';
+
+    if (place.shouldShowRating) {
+        content = content.concat('<p>FourSquare Rating: ' + place.rating + '</p>');
+    }
+
+    if (place.status) {
+        var cssClass = place.isOpen ? "status-open" : "status-closed";
+        content = content.concat('<div class=' + cssClass + '>');
+        content = content.concat('<p>' + place.status + '</p>');
+        content = content.concat('</div>');
+    }
+
+    if (place.url) {
+        content = content.concat('<a href=' + place.url + '>' + place.url +'</a>');
+    }
+
+    content = content.concat('<p>Powered by FourSquare');
+
+    return content;
+
+}
+
+function toggleBounce(marker) {
+    /*
+     * Set the animating, stop it
+     */
+    if (marker.getAnimation() !== null) {
+        marker.setAnimation(null);
+        /*
+         * Else animate with bounce
+         */
+    } else {
+        marker.setAnimation(google.maps.Animation.BOUNCE);
+    }
+}
+
+function showInfoWindow(marker, place) {
+
+    var foursquareAPICall = foursquareAPIBaseUrl +
+        place.venueId +
+        '?client_id=' + clientId +
+        '&client_secret=' + clientSecret +
+        '&v=' + foursquareVersion;
+
+    $.ajax({
+        url: foursquareAPICall,
+        cache: true,
+        dataType: 'jsonp',
+        success: function (data) {
+            var venue = data.response.venue;
+            if (typeof venue.rating != "undefined") {
+                place.rating = venue.rating;
+                place.shouldShowRating = true;
+            } else {
+                place.rating = undefined;
+                place.shouldShowRating = false;
+            }
+
+            // If the hours for the venue are present
+            // get the isOpen flag and the status message
+            if (typeof venue.hours != "undefined") {
+                place.isOpen = venue.hours.isOpen;
+                place.status = venue.hours.status;
+            } else {
+                place.isOpen = false;
+                place.status = undefined;
+            }
+
+            // If the venue has a url associated with it
+            // set the value of the url for the this.
+            if (typeof venue.url != "undefined") {
+                place.url = venue.url;
+            } else {
+                place.url = undefined;
+            }
+
+            var content = createInfoWindowContent(place);
+            //console.log(content);
+            toggleBounce(marker);
+            setTimeout(function(){ toggleBounce(marker); }, 1400);
+            infoWindow.setContent(content);
+            infoWindow.open(map, marker);
+        },
+        error: function(e) {
+            vm.errorMessage('Could not retrieve venue data from Foursquare');
+        }
+    });
+
+}
 
 // Constructor for new Place objects
 function Place(name, latitude, longitude, venueId) {
@@ -12,28 +121,33 @@ function Place(name, latitude, longitude, venueId) {
     this.rating = undefined;
     this.status = undefined;
     this.shouldShowRating = false;
+
+    var latLng = new google.maps.LatLng(this.latitude, this.longitude);
+    this.marker = new google.maps.Marker({
+        position: latLng,
+        map: map,
+        title: this.name
+    });
+    var self = this;
+
+    window.mapBounds.extend(latLng);
+    google.maps.event.addListener(self.marker, 'click', (function(marker, place) {
+        //console.log(self);
+        return function() {
+            showInfoWindow(marker,place);
+        };
+    })(this.marker, self));
+
+    map.fitBounds(window.mapBounds);
+    map.setCenter(window.mapBounds.getCenter());
 }
-
-// If the data returned from FourSquare includes hours
-// return true so the knockout visible binding can
-// determine whether or not to display the div in the
-// InfoWindow
-Place.prototype.shouldShowOpenStatus = function () {
-    return this.isOpen !== undefined;
-};
-
-// Returns the css class to use in the InfoWindow
-// template, green text if currently open, red if closed
-Place.prototype.openStatus = function() {
-    return this.isOpen ? "status-open" : "status-closed";
-};
 
 // Hardcoded places for the map
 // Each place has a name, latitude, longitude, and a FourSquare venue id
 // that will be used to get information about the venue in a
 // FourSquare API call
-var model = {
-    places: [
+function Model() {
+    this.places = [
         new Place('Bard Coffee', 43.657638, -70.255206, '4ac0dc1ef964a520bf9420e3'),
         new Place('Arabica Coffee Company', 43.659189, -70.248933, '4f6dec4de4b0ad1af4ef661f'),
         new Place('Dobra Tea', 43.658282, -70.255249, '4d31f181b6093704b772f1df'),
@@ -43,8 +157,21 @@ var model = {
         new Place("Captain Sam's Ice Cream", 43.656175, -70.251503, '4fb2a422e4b0a0d79a9e1ae0'),
         new Place('BaoBao Dumpling House', 43.652646, -70.263007, '544091cc498e405221d39a2a'),
         new Place('Otto Pizza', 43.654639, -70.262207, '4b2c3381f964a520a2c324e3')
-    ]
-};
+    ];
+}
+
+function initializeMap() {
+    var mapCanvas = document.getElementById('map-canvas');
+    // Create a Google map centered on downtown Portland, ME
+    var mapOptions = {
+        center: new google.maps.LatLng(43.655383, -70.257807),
+        zoom: 16,
+        mapTypeId: google.maps.MapTypeId.ROADMAP
+    };
+    map = new google.maps.Map(mapCanvas, mapOptions);
+    infoWindow = new google.maps.InfoWindow();
+    window.mapBounds = new google.maps.LatLngBounds();
+}
 
 // The ViewModel for Knockout.js
 function ViewModel() {
@@ -58,64 +185,20 @@ function ViewModel() {
 
     // The selected place for the InfoWindow
     self.currentPlace = ko.observable();
+    self.currentPlace.extend({ notify: 'always' });
 
-    self.myMap = undefined;
-    self.infoWindow = undefined;
+    self.errorMessage = ko.observable('');
 
     // Initialize function
     self.initialize = function() {
-        var mapCanvas = document.getElementById('map-canvas');
-        // Create a Google map centered on downtown Portland, ME
-        var mapOptions = {
-            center: new google.maps.LatLng(43.655383, -70.257807),
-            zoom: 16,
-            mapTypeId: google.maps.MapTypeId.ROADMAP
-        };
-        self.myMap = new google.maps.Map(mapCanvas, mapOptions);
-
-        self.allPlaces = model.places;
+        self.allPlaces = new Model().places;
 
         // Initially all the places are visible
         self.allPlaces.forEach(function(place){
             self.visiblePlaces.push(place);
         });
-
-        // Set up the HTML for the InfoWindow using a
-        // Knockout template
-        var infoWindowHTML = '<div id="info-window"' +
-            'data-bind="template: { name: \'info-window-template\', data: currentPlace }">' +
-            '</div>';
-
-        self.infoWindow = new google.maps.InfoWindow({
-            content: infoWindowHTML
-        });
-
-        // Need to make sure the Knockout bindings are only applied once
-        var isInfoWindowLoaded = false;
-
-        // When the DOM of the InfoWindow is ready, apply the
-        // Knockout bindings
-        google.maps.event.addListener(self.infoWindow, 'domready', function() {
-            if (!isInfoWindowLoaded) {
-                ko.applyBindings(self, $("#info-window")[0]);
-                isInfoWindowLoaded = true;
-            }
-        })
     };
 
-    // Reset the color of all the visible map markers
-    // to the standard Google red dot.
-    self.resetMarkerColors = function () {
-        self.visiblePlaces().forEach(function(place){
-            place.marker.setIcon('http://maps.google.com/mapfiles/ms/icons/red-dot.png');
-        });
-    };
-
-    // Set the color of the selected marker to blue
-    self.toggleColor = function(marker) {
-        self.resetMarkerColors();
-        marker.setIcon('http://maps.google.com/mapfiles/ms/icons/blue-dot.png');
-    };
 
     // Filter the list of places and markers based on the input in
     // the search box.
@@ -125,10 +208,7 @@ function ViewModel() {
         // Clear out the array of visible places and
         // close the InfoWindow
         self.visiblePlaces.removeAll();
-        self.infoWindow.close();
-
-        // Reset all the markers to red
-        self.resetMarkerColors();
+        infoWindow.close();
 
         // Iterate over all the places and make the marker invisible.
         // If the name of the place matches the search query, add
@@ -146,28 +226,6 @@ function ViewModel() {
         });
     };
 
-    // Add the markers to the map as part of the initialization
-    // of the app.
-    self.addMarkers = function () {
-        for (var i = 0; i < self.visiblePlaces().length; i++) {
-            var marker = new google.maps.Marker({
-                position: new google.maps.LatLng(self.visiblePlaces()[i].latitude, self.visiblePlaces()[i].longitude),
-                map: self.myMap,
-                title: self.visiblePlaces()[i].name
-            });
-
-            // Add a click listener to each marker. When the marker is clicked, determine
-            // the place from the marker and execute the function that is called when
-            // a place in the list is clicked.
-            google.maps.event.addListener(marker, 'click', (function(markerCopy) {
-                return function() {
-                    self.clickPlaceFromMarker(markerCopy);
-                };
-            })(marker));
-            self.visiblePlaces()[i].marker = marker;
-        }
-    };
-
     // Finds the place associated with the marker and
     // calls the self.placeClicked function with that place.
     self.clickPlaceFromMarker = function(marker) {
@@ -175,70 +233,13 @@ function ViewModel() {
             if (marker === place.marker) {
                 self.placeClicked(place);
             }
-        })
-    };
-
-    // Toggle the color for the marker for the place
-    // that was clicked on and get the data from
-    // FourSquare for that place.
-    self.placeClicked = function(place) {
-        self.toggleColor(place.marker);
-        self.fetchFourSquareDataForPlace(place);
-        return true;
-    };
-
-    // Call the FourSquare API to get the data for the place
-    // using the place's venueId
-    self.fetchFourSquareDataForPlace = function(place) {
-        var foursquareApi = "https://api.foursquare.com/v2/venues/" + place.venueId +
-            "?client_id=X3UYVL1QCSRGJXWW00M3UYNGQ1FX3W00PMRQMAOV22LDJHGW" +
-            "&client_secret=TNI1UYYG0JRIGQE31AIQ2FHPOHE2ZHN2DA4TGW2B4WOB30W0" +
-            "&v=20151129";
-
-        // The AJAX call to FourSquare
-        $.ajax({
-            url: foursquareApi,
-            cache: true,
-            dataType: 'jsonp',
-            success: function(data) {
-                // Get the venue object from the response
-                var venue = data.response.venue;
-                // If a rating is present, get it and set
-                // shouldShowRating to true.
-                if (typeof venue.rating != "undefined") {
-                    place.rating = venue.rating;
-                    place.shouldShowRating = true;
-                } else {
-                    place.rating = undefined;
-                    place.shouldShowRating = false;
-                }
-
-                // If the hours for the venue are present
-                // get the isOpen flag and the status message
-                if (typeof venue.hours != "undefined") {
-                    place.isOpen = venue.hours.isOpen;
-                    place.status = venue.hours.status;
-                } else {
-                    place.isOpen = false;
-                    place.status = undefined;
-                }
-
-                // If the venue has a url associated with it
-                // set the value of the url for the place.
-                if (typeof venue.url != "undefined") {
-                    place.url = venue.url;
-                } else {
-                    place.url = undefined;
-                }
-
-                // Set the ko.observable currentPlace to the
-                // value of place so that the InfoWindow will
-                // display the correct values.
-                self.currentPlace(place);
-                self.infoWindow.open(self.myMap, place.marker);
-            }
         });
+    };
 
+    // Show the infowindow when a place in the list is clicked.
+    self.placeClicked = function(place) {
+        showInfoWindow(place.marker, place);
+        return true;
     };
 }
 
@@ -264,8 +265,8 @@ function initialize() {
     // Create a new ViewModel, apply the Knockout bindings
     // and then initialize the ViewModel and add the markers
     // to the map.
-    var vm = new ViewModel();
+    initializeMap();
+    vm = new ViewModel();
     ko.applyBindings(vm);
     vm.initialize();
-    vm.addMarkers();
 }
