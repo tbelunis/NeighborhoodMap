@@ -8,36 +8,26 @@
     <link href="styles/styles.css" rel="stylesheet">
   </head>
   <body>
-  <div class="container-fluid">
-    <header>Eat and Drink in Portland Maine!</header>
 
-    <div class="row-offcanvas row-offcanvas-left">
-      <div id="sidebar" class="sidebar-offcanvas">
-        <p>Search: <input data-bind="textInput: searchQuery, event: {keyup: filterPlaces}" /> </p>
-        <div class="col-md-12">
-          <ul class="nav nav-pills nav-stacked" data-bind="foreach: visiblePlaces()">
-            <li class="place-item">
-              <a href="#" data-bind="text: name, click: $parent.placeClicked"></a>
-            </li>
-          </ul>
+    <div class="row">
+        <div class="col-sm-3">
+          <header>Eat and Drink in Portland Maine!</header>
+          <input class="search-query" placeholder="Search" data-bind="textInput: searchQuery, event: {keyup: filterPlaces}"/>
+          <div>
+            <ul class="places-list" data-bind="foreach: visiblePlaces()">
+              <li class="place-item" data-bind="text: name, click: $parent.placeClicked"></li>
+            </ul>
+          </div>
+          <div id="error"><span data-bind="text: errorMessage, visible: hasError"></span></div>
         </div>
-      </div>
-      <div id="main" class="map row">
-        <div class="col-md-12 map">
-          <p class="visible-xs">
-            <button type="button" class="btn btn-primary btn-xs" data-toggle="offcanvas"><i class="glyphicon glyphicon-chevron-left"></i></button>
-          </p>
-          <div id="map-canvas" class="google-map-canvas"></div>
-        </div>
-      </div>
+        <div id="map-canvas" class="col-sm-9"></div>
     </div>
-  </div>
 
   <script src="js/lib/knockout/dist/knockout.js"></script>
   <script src="js/lib/jquery/dist/jquery.min.js"></script>
   <script src="js/lib/bootstrap/dist/js/bootstrap.min.js"></script>
   <script src="js/app.js"></script>
-  <script async src="https://maps.googleapis.com/maps/api/js?callback=initialize"></script>
+  <script async src="https://maps.googleapis.com/maps/api/js?callback=initialize" onerror="mapError()"></script>
 
   </body>
 </html>

@@ -16,7 +16,13 @@ var foursquareVersion = '20151129';
 // ViewModel
 var vm;
 
+// Set an error message if the Google map fails to load.
+function mapError() {
+    vm.errorMessage = "Could not load the Google map";
+    vm.hasError = true;
+}
 
+// Create the content to display in the InfoWindow
 function createInfoWindowContent(place) {
     console.log(place);
     var content = '<div id=info>' +
@@ -37,17 +43,18 @@ function createInfoWindowContent(place) {
         content = content.concat('<a href=' + place.url + '>' + place.url +'</a>');
     }
 
-    content = content.concat('<p>Powered by FourSquare');
+    content = content.concat('<p>Powered by FourSquare</p>');
 
     return content;
 
 }
 
+// Animate the marker by bouncing it when clicked.
 function toggleBounce(marker) {
     /*
      * Set the animating, stop it
      */
-    if (marker.getAnimation() !== null) {
+    if (marker.getAnimation() != null) {
         marker.setAnimation(null);
         /*
          * Else animate with bounce
@@ -57,6 +64,8 @@ function toggleBounce(marker) {
     }
 }
 
+// Fetch the data from FourSquare and call the function'
+// to display it in the InfoWindow
 function showInfoWindow(marker, place) {
 
     var foursquareAPICall = foursquareAPIBaseUrl +
@@ -70,6 +79,8 @@ function showInfoWindow(marker, place) {
         cache: true,
         dataType: 'jsonp',
         success: function (data) {
+            vm.hasError = false;
+
             var venue = data.response.venue;
             if (typeof venue.rating != "undefined") {
                 place.rating = venue.rating;
@@ -98,14 +109,18 @@ function showInfoWindow(marker, place) {
             }
 
             var content = createInfoWindowContent(place);
-            //console.log(content);
+
+            // Animate the marker. Set the timeout so it stops
+            // after a few bounces
             toggleBounce(marker);
             setTimeout(function(){ toggleBounce(marker); }, 1400);
+
             infoWindow.setContent(content);
             infoWindow.open(map, marker);
         },
         error: function(e) {
             vm.errorMessage('Could not retrieve venue data from Foursquare');
+            vm.hasError = true;
         }
     });
 
@@ -130,14 +145,15 @@ function Place(name, latitude, longitude, venueId) {
     });
     var self = this;
 
-    window.mapBounds.extend(latLng);
+
     google.maps.event.addListener(self.marker, 'click', (function(marker, place) {
-        //console.log(self);
         return function() {
             showInfoWindow(marker,place);
         };
     })(this.marker, self));
 
+    // Make sure the bounds are set to show all the markers
+    window.mapBounds.extend(latLng);
     map.fitBounds(window.mapBounds);
     map.setCenter(window.mapBounds.getCenter());
 }
@@ -188,6 +204,7 @@ function ViewModel() {
     self.currentPlace.extend({ notify: 'always' });
 
     self.errorMessage = ko.observable('');
+    self.hasError = false;
 
     // Initialize function
     self.initialize = function() {
@@ -242,23 +259,6 @@ function ViewModel() {
         return true;
     };
 }
-
-$(document).ready(function() {
-    var items;
-    // Sidebar toggling on/off view on small screen
-    // Sidebar slider code from http://www.codeply.com/go/bp/mL7j0aOINa
-    $('[data-toggle=offcanvas]').click(function() {
-        $('.row-offcanvas').toggleClass('active');
-    });
-    // Change active state for sidebar links when clicked
-    $('li').click(function() {
-        items = document.getElementsByTagName('li');
-        for (var i = 0; i < items.length; i++) {
-            items[i].className = '';
-        }
-        $(this).addClass('active');
-    });
-});
 
 // Callback for the async loading of the Google maps API
 function initialize() {
