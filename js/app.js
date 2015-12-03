@@ -18,8 +18,8 @@ var vm;
 
 // Set an error message if the Google map fails to load.
 function mapError() {
-    vm.errorMessage = "Could not load the Google map";
-    vm.hasError = true;
+    var mapCanvas = document.getElementById('map-canvas');
+    mapCanvas.innerHTML('<h4>Could not retrieve the Google map.</h4>');
 }
 
 // Create the content to display in the InfoWindow
@@ -79,7 +79,7 @@ function showInfoWindow(marker, place) {
         cache: true,
         dataType: 'jsonp',
         success: function (data) {
-            vm.hasError = false;
+            vm.hasError(false);
 
             var venue = data.response.venue;
             if (typeof venue.rating != "undefined") {
@@ -120,7 +120,7 @@ function showInfoWindow(marker, place) {
         },
         error: function(e) {
             vm.errorMessage('Could not retrieve venue data from Foursquare');
-            vm.hasError = true;
+            vm.hasError(true);
         }
     });
 
@@ -204,7 +204,7 @@ function ViewModel() {
     self.currentPlace.extend({ notify: 'always' });
 
     self.errorMessage = ko.observable('');
-    self.hasError = false;
+    self.hasError = ko.observable(false);
 
     // Initialize function
     self.initialize = function() {
