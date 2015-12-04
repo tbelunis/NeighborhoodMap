@@ -19,7 +19,7 @@ var vm;
 // Set an error message if the Google map fails to load.
 function mapError() {
     var mapCanvas = document.getElementById('map-canvas');
-    mapCanvas.innerHTML('<h4>Could not retrieve the Google map.</h4>');
+    mapCanvas.innerHTML = '<h4>Could not retrieve the Google map.</h4>';
 }
 
 // Create the content to display in the InfoWindow
